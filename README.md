@@ -1,36 +1,209 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🏢 FirmaCheck – ověření firmy podle IČO
 
-## Getting Started
+FirmaCheck je webová aplikace pro ověřování českých firem podle IČO. Uživatel zadá IČO (případně i název firmy) a aplikace načte data z ARES, zobrazí detail firmy, umožní její uložení, porovnání názvu, zobrazení na mapě a export dat do CSV/JSON.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 🚀 Live demo
+
+👉 https://firmacheck-ashen.vercel.app  
+👉 https://firmacheck-64odqgcog-jakubzamecniks-projects.vercel.app
+
+---
+
+## 🧰 Použitý stack
+
+- Next.js (App Router)
+- React + TypeScript
+- Tailwind CSS
+- ARES REST API
+- OpenStreetMap Nominatim (geocoding)
+- LocalStorage (cache + ukládání dat)
+- Vercel (deployment)
+
+---
+
+## 🔌 Použitá API
+
+### 🏛 ARES API
+Získávání firemních údajů podle IČO:
+
+- IČO
+- obchodní název
+- právní forma
+- datum vzniku
+- stav subjektu
+- DIČ
+- adresa sídla
+
+Endpoint:
+```
+https://ares.gov.cz/ekonomicke-subjekty-v-be/rest/ekonomicke-subjekty/{ico}
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Aplikace používá vlastní Next.js proxy endpoint:
+```
+/api/ares?ico=XXXXXXXX
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 🗺 Geocoding API (OpenStreetMap)
+Použito pro převod adresy na souřadnice:
 
-## Learn More
+```
+https://nominatim.openstreetmap.org/search
+```
 
-To learn more about Next.js, take a look at the following resources:
+Výsledek se používá pro:
+- zobrazení mapy odkazu
+- doplnění GPS souřadnic
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🧠 Funkcionality
 
-## Deploy on Vercel
+### 1. Ověření firmy
+- zadání IČO
+- volitelný název firmy
+- načtení dat z ARES
+- validace vstupu (8 číslic)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 2. Kontrola názvu firmy
+Aplikace porovnává uživatelský název s ARES názvem:
+
+- ✔ shoda
+- ⚠ částečná shoda
+- ❌ neshoda
+
+Ignoruje:
+- diakritiku
+- mezery
+- speciální znaky
+- velikost písmen
+
+---
+
+### 3. Cache systém (SQLite-like simulace)
+Aplikace simuluje cache vrstvu:
+
+- první request → ARES API
+- další request → LocalStorage cache
+- klíč:
+```
+firmacheck_cache_{ICO}
+```
+
+Výhody:
+- rychlejší načítání
+- méně API requestů
+- offline-like chování
+
+---
+
+### 4. Ukládání firem
+Uložené firmy se ukládají do:
+
+```
+localStorage: firmacheck_saved_companies
+```
+
+Funkce:
+- přidání firmy
+- odstranění firmy
+- kliknutí = znovu načíst detail
+- persistence po refreshi
+
+---
+
+### 5. Mapa sídla firmy
+- adresa se geokóduje přes Nominatim
+- zobrazení:
+  - Google Maps odkaz
+  - Mapy.com odkaz
+- iframe Mapy.com není podporován → nahrazen linkem
+
+---
+
+### 6. Export dat
+
+#### 📊 CSV export
+Obsahuje:
+- IČO
+- název firmy
+- právní forma
+- stav subjektu
+- adresa
+- datum vzniku
+- datum ověření
+- zdroj dat
+- souřadnice
+
+#### 📋 JSON export
+- kopie dat do schránky
+- vhodné pro API / další zpracování
+
+---
+
+## 🤖 Použité AI nástroje
+
+- ChatGPT – návrh architektury aplikace
+- ChatGPT – generování React komponent
+- ChatGPT – tvorba API endpointu (ARES proxy)
+- ChatGPT – debug a optimalizace kódu
+- ChatGPT – návrh UX a struktury projektu
+
+---
+
+## 🧠 Ukázky promptů
+
+### Prompt 1
+```
+Navrhni React aplikaci, která bude ověřovat firmy podle IČO pomocí ARES API a zobrazí detail firmy v UI.
+```
+
+---
+
+### Prompt 2
+```
+Udělej Next.js API endpoint podle Swagger dokumentace ARES. Použij JSON strukturu ze Swaggeru a normalizuj data pro frontend formulář.
+```
+
+---
+
+### Prompt 3
+```
+Navrhni UX pro formulář, který ověřuje firmu podle IČO a umožňuje ukládání do LocalStorage, export do CSV a zobrazení na mapě.
+```
+
+---
+
+## 🔁 Vývojové iterace
+
+### Iterace 1
+- základní vyhledávání firmy
+- napojení na ARES API
+- jednoduché UI bez cache
+
+### Iterace 2
+- přidání cache (LocalStorage)
+- ukládání firem
+- export CSV/JSON
+- validace názvu firmy
+- geocoding a mapa
+
+---
+
+## 🚀 Co bych vylepšil
+
+- přechod na reálnou SQLite / IndexedDB databázi
+- uživatelský účet + login systém
+- cloudová databáze (multi-user režim)
+- full-text search firem
+- historie vyhledávání
+- lepší geocoding (přes Mapy.com API)
+- testy (Jest / Playwright)
+- rate limiting a backend ochrana API
+```

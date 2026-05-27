@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from "next/image";
 
 // Rozhraní pro strukturu firmy
 interface CompanyData {
@@ -68,6 +69,8 @@ export default function CompanyForm() {
   const saveToCache = (searchIco: string, data: Omit<CompanyData, 'zdrojDat'>) => {
     localStorage.setItem(`firmacheck_cache_${searchIco}`, JSON.stringify(data));
   };
+
+
 
   // Hlavní funkce pro ověření firmy
   const handleVerify = async (e: React.FormEvent | null, targetIco?: string) => {
@@ -267,6 +270,27 @@ export default function CompanyForm() {
               className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition bg-white text-black"
             />
           </div>
+
+          {!activeData && !loading && (
+            <div className="flex flex-col items-center justify-center py-10 text-center">
+
+              <Image
+                src="/ai-illustration.png"
+                alt="Ověření firmy"
+                width={300}
+                height={200}
+              />
+
+              <h2 className="mt-4 text-lg font-semibold text-gray-700">
+                Zadej IČO firmy pro ověření
+              </h2>
+
+              <p className="text-sm text-gray-500">
+                Data se načtou z ARES a zobrazí se detail firmy
+              </p>
+
+            </div>
+          )}
 
           <div className="md:col-span-2">
             <button
